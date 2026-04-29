@@ -3,16 +3,18 @@ from Player import Player, HumanPlayer, ComputerPlayer
 from Utilities import *
 from Card import Card
 
+
+### Do usuniecia
 def is_valid_move(player_deck, card_to_play, on_table, atut):
     if not on_table:
         return True
     winning_card = on_table[0]
     for card in on_table:
-                if card.color == winning_card.color and card.value() > winning_card.value():
+                if card.color == winning_card.color and card.standard_value() > winning_card.standard_value():
                     winning_card = card
                 elif card.color == atut and winning_card.color != atut:
                     winning_card = card
-                elif atut != "" and card.color == atut and winning_card.color == atut and card.value() > winning_card.value():
+                elif atut != "" and card.color == atut and winning_card.color == atut and card.standard_value() > winning_card.standard_value():
                     winning_card = card
     leading_color = on_table[0].color
     has_color = any(card.color == leading_color for card in player_deck)
@@ -22,13 +24,13 @@ def is_valid_move(player_deck, card_to_play, on_table, atut):
             print("You must follow the color of the first card on the table!")
             return False    
         else:
-            if card_to_play.value() < winning_card.value() and card_to_play.color == winning_card.color and any(card.value() > winning_card.value() for card in player_deck if card.color == leading_color):
+            if card_to_play.standard_value() < winning_card.standard_value() and card_to_play.color == winning_card.color and any(card.standard_value() > winning_card.standard_value() for card in player_deck if card.color == leading_color):
                 print("You must play a higher card of the leading color if you have one!")
                 return False
         return True
     if has_atut:
         if card_to_play.color != atut: 
-            if winning_card.color == atut and not any(card.value() > winning_card.value() for card in player_deck if card.color == atut):
+            if winning_card.color == atut and not any(card.standard_value() > winning_card.standard_value() for card in player_deck if card.color == atut):
                 return True
             print("You must play the atut!")
             return False
@@ -46,6 +48,7 @@ class Game:
         self.players = [player1, ComputerPlayer("Player 2", 1), ComputerPlayer("Player 3", 2)]
         self.player_scores = [0, 0, 0]
         self.table_cards = []
+        self.rest_of_cards = []
 
     def deal_cards(self):
         deck = [Card(figure, color) for figure in figures for color in colors]
@@ -67,9 +70,7 @@ class Game:
         self.players[1].cards.sort(key = lambda card: (color_order[card.color], figure_order[card.figure]))
         self.players[2].cards.sort(key = lambda card: (color_order[card.color], figure_order[card.figure]))
         full_deck = [Card(figure, color) for figure in figures for color in colors]
-        self.players[0].rest_of_cards = [card for card in full_deck if card not in self.players[0].cards]#
-        self.players[1].rest_of_cards = [card for card in full_deck if card not in self.players[1].cards]
-        self.players[2].rest_of_cards = [card for card in full_deck if card not in self.players[2].cards]
+        self.rest_of_cards = full_deck
         deck.sort(key = lambda card: (color_order[card.color], figure_order[card.figure]))
         return deck
 
@@ -83,7 +84,7 @@ class Game:
             if bidder in passed_players:
                 bidder = self.players[(bidder.id+1)%3]
                 continue
-            bet = bidder.make_a_bid(highest_bid, highest_bidder, 0)
+            bet = bidder.make_a_bid(highest_bid, highest_bidder, 0, self.rest_of_cards)
             if int(bet) == 0:
                 passed_players.append(bidder)
             elif int(bet) <= 0 or int(bet)+highest_bid > 300 or int(bet)%5 != 0:
@@ -93,32 +94,20 @@ class Game:
                 highest_bid += int(bet)
                 highest_bidder = self.players[bidder.id]
             bidder = self.players[(bidder.id+1)%3]
+        print("Highest bidder: " + highest_bidder.name + " with a bet of " + str(highest_bid))
+        while len(self.table_cards) > 0:
+            temp = self.table_cards.pop(0)
+            highest_bidder.cards.append(temp)
+        highest_bidder.cards.sort(key = lambda card: (color_order[card.color],figure_order[card.figure]))
+        cards_to_give = highest_bidder.gave_away(self.rest_of_cards)
+        self.players[(highest_bidder.id+1)%3].cards.append(cards_to_give[0])
+        self.players[(highest_bidder.id+2)%3].cards.append(cards_to_give[1])
+        self.players[(highest_bidder.id+1)%3].cards.sort(key = lambda card: (color_order[card.color],figure_order[card.figure]))
+        self.players[(highest_bidder.id+2)%3].cards.sort(key = lambda card: (color_order[card.color],figure_order[card.figure]))
+        print_cards(self.players[0].cards)
+        print_cards(self.players[1].cards)
+        print_cards(self.players[2].cards)
         
-        # print("Highest bidder: " + highest_bidder.name + " with a bet of " + str(highest_bid))
-        # while len(self.table_cards) > 0:
-        #     temp = self.table_cards.pop(0)
-        #     highest_bidder.cards.append(temp)
-        # highest_bidder.cards.sort(key = lambda card: (color_order[card.color],figure_order[card.figure]))
-        # if highest_bidder.id == 0:
-        #     print_cards(highest_bidder.cards)
-        #     l = input("Which cards do you want to discard to left player?")
-        #     card_left = highest_bidder.cards.pop(int(l))
-        #     self.players[(highest_bidder.id+1)%3].cards.append(card_left)
-        #     print_cards(highest_bidder.cards)
-        #     r = input("Which cards do you want to discard to right player?")
-        #     card_right = highest_bidder.cards.pop(int(r))
-        #     self.players[(highest_bidder.id+2)%3].cards.append(card_right)
-        # else:
-        #     print_cards(highest_bidder.cards)
-        #     l = input("Which cards do you want to discard to left player?")
-        #     card_left = highest_bidder.cards.pop(int(l))
-        #     self.players[(highest_bidder.id+1)%3].cards.append(card_left)
-        #     print_cards(highest_bidder.cards)
-        #     r = input("Which cards do you want to discard to right player?")
-        #     card_right = highest_bidder.cards.pop(int(r))
-        #     self.players[(highest_bidder.id+2)%3].cards.append(card_right)
-        # self.players[(highest_bidder.id+1)%3].cards.sort(key = lambda card: (color_order[card.color],figure_order[card.figure]))
-        # self.players[(highest_bidder.id+2)%3].cards.sort(key = lambda card: (color_order[card.color],figure_order[card.figure]))
         return highest_bidder.id, highest_bid
 
 
@@ -191,7 +180,9 @@ class Game:
     def round(self):
         print("************************************* Round " + str(self.round_nr) + " *************************************")
         self.table_cards = self.deal_cards()
+        self.players[1].give_points_to_cards(self.rest_of_cards)
         highest_bidder_id, highest_bid = self.bidding_phase()
+        
         # first_player_id = highest_bidder_id
         # sum_from_cards = self.playing_phase(first_player_id)
         # for i in range(3):

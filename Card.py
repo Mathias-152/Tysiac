@@ -4,6 +4,7 @@ class Card:
     def __init__(self, figure, color):
         self.figure = figure
         self.color = color
+        self.value = self.standard_value()
     
     def __str__(self):
         if self.color == "Kier" or self.color == "Karo":
@@ -22,7 +23,7 @@ class Card:
     def __eq__(self, other):
         return self.figure == other.figure and self.color == other.color
     
-    def value(self):
+    def standard_value(self):
         values = {
             "9": 0,
             "10": 10,
