@@ -32,8 +32,10 @@ figure_order = {
 def print_cards(cards):
     for card in cards:
         print("(", card, ")", end = " ")
-    print() 
-    print("   0       1       2       3       4       5       6       7       8       9")
+    print()
+    for i in range(len(cards)):
+        print(f"   {i}    ", end="")
+    print()
 
     
 colors = ("Kier", "Pik", "Karo", "Trefl")

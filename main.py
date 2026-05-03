@@ -7,6 +7,7 @@ from Game import *
 from Card import Card
 
 
+
 def main():
     player1 = HumanPlayer("Mathias")
     game1 = Game(player1)

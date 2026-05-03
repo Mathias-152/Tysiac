@@ -15,11 +15,7 @@ class Player:
         return f"{self.name} ({self.score} points)"
     
     
-
-
-    def is_valid_move(self, card_to_play, on_table, atut):
-        if not on_table:
-            return True
+    def highest_on_table(self, on_table, atut):
         winning_card = on_table[0]
         for card in on_table:
                     if card.color == winning_card.color and card.standard_value() > winning_card.standard_value():
@@ -28,23 +24,50 @@ class Player:
                         winning_card = card
                     elif atut != "" and card.color == atut and winning_card.color == atut and card.standard_value() > winning_card.standard_value():
                         winning_card = card
+        return winning_card
+
+    def if_any_higher_card(self, on_table, atut):
+        leading_color = on_table[0].color
+        winning_card = self.highest_on_table(on_table, atut)
+        has_color = any(card.color == leading_color for card in self.cards)
+        has_atut = any(card.color == atut for card in self.cards)
+        if has_color:
+            if any(card.color == leading_color and card.standard_value() > winning_card.standard_value()for card in self.cards):
+                return True
+        elif has_atut:
+            if any(card.color == leading_color and card.standard_value() > winning_card.standard_value()for card in self.cards):
+                return True
+        return False
+        
+            
+            
+        
+
+
+    def is_valid_move(self, card_to_play, on_table, atut):
+        if not on_table:
+            return True
+        winning_card = self.highest_on_table(on_table, atut)
         leading_color = on_table[0].color
         has_color = any(card.color == leading_color for card in self.cards)
         has_atut = any(card.color == atut for card in self.cards)
         if has_color:
             if card_to_play.color != leading_color:
-                print("You must follow the color of the first card on the table!")
+                if self.id == 0:
+                    print("You must follow the color of the first card on the table!")
                 return False    
             else:
-                if card_to_play.value() < winning_card.standard_value() and card_to_play.color == winning_card.color and any(card.standard_value() > winning_card.standard_value() for card in self.cards if card.color == leading_color):
-                    print("You must play a higher card of the leading color if you have one!")
+                if card_to_play.standard_value() < winning_card.standard_value() and card_to_play.color == winning_card.color and any(card.standard_value() > winning_card.standard_value() for card in self.cards if card.color == leading_color):
+                    if self.id == 0:
+                        print("You must play a higher card of the leading color if you have one!")
                     return False
             return True
         if has_atut:
             if card_to_play.color != atut: 
                 if winning_card.color == atut and not any(card.standard_value() > winning_card.standard_value() for card in self.cards if card.color == atut):
                     return True
-                print("You must play the atut!")
+                if self.id == 0:
+                    print("You must play the atut!")
                 return False
             return True
         return True
@@ -57,8 +80,10 @@ class HumanPlayer(Player):
     def __init__(self, name):
         super().__init__(name, 0)
 
-    def make_a_move(self):
-        pass
+    def make_a_move(self, NP_rest_of_cards, on_table, atu):
+        print
+
+
 
     def make_a_bid(self, highest_bid, highest_bidder, second_bidding, NP_rest_of_cards):
         print("Your cards: ")
@@ -75,6 +100,19 @@ class HumanPlayer(Player):
         r = input("Which cards do you want to discard to right player?")
         cards_to_give.append(self.cards.pop(int(r)))
         return cards_to_give
+    
+    def make_a_move(self, NP_rest_of_cards, on_table, atu):
+        print("Cards on table:", end = '\n')
+        print_cards(on_table)
+        print("Your turn")
+        print_cards(self.cards)
+        while True:                   
+            x = input(self.name + ", which card do you want to play? ")
+            chosen_card = self.cards[int(x)]
+            if self.is_valid_move(chosen_card, on_table, atu):
+                self.cards.remove(chosen_card)
+                return chosen_card
+    
 
 class ComputerPlayer(Player):
     def __init__(self, name, id):
@@ -151,15 +189,15 @@ class ComputerPlayer(Player):
                     else:
                         points+=rest_of_cards[0].standard_value()
                         rest_of_cards.pop(0)
-        print_cards(self.cards)
-        print(f"{self.name}'s card value = {points} for cards: {', '.join(str(card) for card in winning_cards)}")
+        #print_cards(self.cards)
+        #print(f"{self.name}'s card value = {points} for cards: {', '.join(str(card) for card in winning_cards)}")
         return points
 
     def make_a_bid(self, highest_bid, highest_bidder, second_bidding, NP_rest_of_cards):
         if highest_bidder.id == self.id and second_bidding == 0:
             return 0
         score = self.evaluate_cards(NP_rest_of_cards)
-        bet = round((score)/5)*5
+        bet = round((score)//5)*5
         if bet > highest_bid:
             if second_bidding:
                 return bet - highest_bid
@@ -181,6 +219,10 @@ class ComputerPlayer(Player):
                 for card in self.cards:
                     if color == card.color:
                         card.value+=20
+                        if card.figure=="D":
+                            card.value+=20
+                            card.value+=color_value[color]/10
+                    
             # +2*(n-1) points for n cards in color
             for card in self.cards:
                 if color == card.color:
@@ -202,8 +244,8 @@ class ComputerPlayer(Player):
 
 
     def gave_away(self, NP_rest_of_cards):
-        print_cards(self.cards)
-        print("Player cards")
+        #print_cards(self.cards)
+        #print("Player cards")
         cards_to_gave_away = []
         self.give_points_to_cards(NP_rest_of_cards)
         self.cards.sort(key = lambda c:c.value)
@@ -216,7 +258,51 @@ class ComputerPlayer(Player):
         self.cards.sort(key = lambda card: (color_order[card.color],figure_order[card.figure]))
         return cards_to_gave_away
         
-                        
+    def make_a_move(self, NP_rest_of_cards, on_table, atu):
+        #print_cards(self.cards)
+        self.give_points_to_cards(NP_rest_of_cards)
+        card_to_give = Card("A", "Error")
+        if on_table:
+            if self.if_any_higher_card(on_table, atu):
+                self.cards.sort(key = lambda c:c.value, reverse=True)
+                for card in self.cards:
+                    if self.is_valid_move(card, on_table, atu):
+                        card_to_give = card
+                        break
+                self.cards.remove(card_to_give)
+                self.cards.sort(key = lambda card: (color_order[card.color],figure_order[card.figure]))
+                return card_to_give
+            else:
+                self.cards.sort(key = lambda c:c.value)
+                for card in self.cards:
+                    if self.is_valid_move(card, on_table, atu):
+                        card_to_give = card
+                        break
+                self.cards.remove(card_to_give)
+                self.cards.sort(key = lambda card: (color_order[card.color],figure_order[card.figure]))
+                return card_to_give
+        else:
+            for color in colors:
+                if any(c.figure == "D" and c.color == color for c in self.cards) and any(c.figure == "K" and c.color == color for c in self.cards) and any(c.figure == "A" and c.color == color for c in self.cards):
+                    found = next((c for c in self.cards if c.figure == "A" and c.color == color), None)
+                    if found and atu == "":
+                        found.value+=20
+                    else:
+                        print("Make a move error")
+                if any(c.figure == "10" and c.color == color for c in self.cards) and any(c.figure != "10" and c.color == color for c in self.cards) and (sum(c.color == color for c in self.cards) == 2):
+                    found = next((c for c in self.cards if c.figure != "10" and c.color == color), None)
+                    if found and atu == "":
+                        found.value+=11
+                    else:
+                        print("Make a move error")        
+            self.cards.sort(key = lambda c:c.value, reverse = True)
+            card_to_give = self.cards[0]
+            self.cards.pop(0)
+            self.cards.sort(key = lambda card: (color_order[card.color],figure_order[card.figure]))
+            return card_to_give
+            
+            
+        
 
 
             
