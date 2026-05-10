@@ -13,7 +13,7 @@ class Game:
         self.player_scores = [0, 0, 0]
         self.table_cards = []
         self.rest_of_cards = []
-
+    # Deals cards to players and prepares the rest of the cards for the bidding phase
     def deal_cards(self):
         deck = [Card(figure, color) for figure in figures for color in colors]
         random.shuffle(deck)
@@ -37,8 +37,7 @@ class Game:
         self.rest_of_cards = full_deck
         deck.sort(key = lambda card: (color_order[card.color], figure_order[card.figure]))
         return deck
-
-
+    # Handles the bidding phase of the game, where players can place their bids based on their cards and the current highest bid. It also handles the exchange of cards between the highest bidder and the other players.
     def bidding_phase(self):
         highest_bid = 100
         highest_bidder = self.players[self.round_nr%3]
@@ -63,15 +62,22 @@ class Game:
             temp = self.table_cards.pop(0)
             highest_bidder.cards.append(temp)
         highest_bidder.cards.sort(key = lambda card: (color_order[card.color],figure_order[card.figure]))
+        while True:
+            bet = int(highest_bidder.make_a_bid(highest_bid, highest_bidder, 1, self.rest_of_cards))
+            if bet < 0 or bet + highest_bid > 300 or bet%5 != 0:
+                print("Invalid bet, try again")
+                continue
+            else:
+                highest_bid += bet
+                print("New bet: " + str(highest_bid))
+                break
         cards_to_give = highest_bidder.gave_away(self.rest_of_cards)
         self.players[(highest_bidder.id+1)%3].cards.append(cards_to_give[0])
         self.players[(highest_bidder.id+2)%3].cards.append(cards_to_give[1])
         self.players[(highest_bidder.id+1)%3].cards.sort(key = lambda card: (color_order[card.color],figure_order[card.figure]))
         self.players[(highest_bidder.id+2)%3].cards.sort(key = lambda card: (color_order[card.color],figure_order[card.figure]))
-        highest_bid += int(highest_bidder.make_a_bid(highest_bid, highest_bidder, 1, self.rest_of_cards))
         return highest_bidder.id, highest_bid
-
-
+    # Handles the playing phase of the game, where players play their cards in turns and the winner of each trick is determined based on the rules of the game. It also keeps track of the points earned by each player from the cards they win in tricks.
     def playing_phase(self, first_player_id):
         def is_atut(card, player_deck, atut):
                 if card.figure == "D" and card.color == "Pik" and any(c.figure == "K" and c.color == "Pik" for c in player_deck):
@@ -120,10 +126,10 @@ class Game:
             sum_from_cards[winning_player_id] += sum(card.standard_value() for card in on_table)
             first_player_id = winning_player_id ###
         return sum_from_cards
-    
+    # Checks if any player has reached the score of 1000 or more, which would indicate that the game is finished
     def is_finnished(self):
         return any(score >= 1000 for score in self.player_scores)
-
+    # Handles the entire flow of a round, including dealing cards, bidding, playing, and updating scores. It also checks for the end of the game and declares the winner if the game is finished.
     def round(self):
         print("************************************* Round " + str(self.round_nr) + " *************************************")
         self.table_cards = self.deal_cards()

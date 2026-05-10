@@ -13,8 +13,7 @@ class Player:
     
     def __repr__(self):
         return f"{self.name} ({self.score} points)"
-    
-    
+    # Returns the highest card on the table, considering the atut    
     def highest_on_table(self, on_table, atut):
         winning_card = on_table[0]
         for card in on_table:
@@ -25,7 +24,7 @@ class Player:
                     elif atut != "" and card.color == atut and winning_card.color == atut and card.standard_value() > winning_card.standard_value():
                         winning_card = card
         return winning_card
-
+    # Checks if the player has any card that can beat the current winning card on the table, considering the atut
     def if_any_higher_card(self, on_table, atut):
         leading_color = on_table[0].color
         winning_card = self.highest_on_table(on_table, atut)
@@ -38,12 +37,7 @@ class Player:
             if any(card.color == leading_color and card.standard_value() > winning_card.standard_value()for card in self.cards):
                 return True
         return False
-        
-            
-            
-        
-
-
+    # Checks if the card the player wants to play is a valid move, considering the rules of the game and the cards on the table                    
     def is_valid_move(self, card_to_play, on_table, atut):
         if not on_table:
             return True
@@ -73,34 +67,29 @@ class Player:
         return True
 
     
-
-        
-
 class HumanPlayer(Player):
     def __init__(self, name):
         super().__init__(name, 0)
-
-    def make_a_move(self, NP_rest_of_cards, on_table, atu):
-        print
-
-
-
+    # Asks the user for their bid, considering the current highest bid and the rules of the game
     def make_a_bid(self, highest_bid, highest_bidder, second_bidding, NP_rest_of_cards):
         print("Your cards: ")
         print_cards(self.cards)
-        bet = input("Current bet: " + str(highest_bid) + " by: " + highest_bidder.name + ", enter your bet increase (or '0' to pass): ")
+        if second_bidding == 0:
+            bet = input("Current bet: " + str(highest_bid) + " by: " + highest_bidder.name + ", enter your bet increase (or '0' to pass): ")
+        else:
+            bet = input("You've won the bid, do you want to increase your bet? Current bet: " + str(highest_bid) + ", enter your bet increase (or '0' to pass): ")
         return bet
-    
+    # Asks the user which cards they want to give away to the other players, considering the rules of the game
     def gave_away(self, NP_rest_of_cards):
         cards_to_give =[]
         print_cards(self.cards)
-        l = input("Which cards do you want to discard to left player?")
+        l = input("Which cards do you want to discard to left player? ")
         cards_to_give.append(self.cards.pop(int(l)))
         print_cards(self.cards)
-        r = input("Which cards do you want to discard to right player?")
+        r = input("Which cards do you want to discard to right player? ")
         cards_to_give.append(self.cards.pop(int(r)))
         return cards_to_give
-    
+    # Asks the user which card they want to play
     def make_a_move(self, NP_rest_of_cards, on_table, atu):
         print("Cards on table:", end = '\n')
         print_cards(on_table)
@@ -117,7 +106,7 @@ class HumanPlayer(Player):
 class ComputerPlayer(Player):
     def __init__(self, name, id):
         super().__init__(name, id)
-
+    # Returns a list of cards that are going to win the trick if played
     def worthfull_cards(self, NP_rest_of_cards):
         rest_of_cards = [card for card in NP_rest_of_cards if card not in self.cards]
         top_cards = [[] for _ in range(len(colors))]
@@ -161,7 +150,7 @@ class ComputerPlayer(Player):
                         winning_cards[i].append(card)
             i += 1
         return winning_cards
-
+    # Evaluates the player's cards and returns a score based on their potential to win tricks, considering the cards that are still in play
     def evaluate_cards(self, NP_rest_of_cards):
         
         winning_cards = self.worthfull_cards(NP_rest_of_cards)
@@ -192,7 +181,7 @@ class ComputerPlayer(Player):
         #print_cards(self.cards)
         #print(f"{self.name}'s card value = {points} for cards: {', '.join(str(card) for card in winning_cards)}")
         return points
-
+    # Determines the computer player's bid based on the cards value
     def make_a_bid(self, highest_bid, highest_bidder, second_bidding, NP_rest_of_cards):
         if highest_bidder.id == self.id and second_bidding == 0:
             return 0
@@ -205,8 +194,7 @@ class ComputerPlayer(Player):
                 return 5
         else:
             return 0
-
-
+    # Determinates card value based on played cards, cards in hand and cards that are still in play
     def give_points_to_cards(self, NP_rest_of_cards):
         rest_of_cards = [card for card in NP_rest_of_cards if card not in self.cards]
         for color in colors: 
@@ -240,9 +228,7 @@ class ComputerPlayer(Player):
         #for card in self.cards:
         #    print("  ", card.value, "  ", end="")
         return 
-
-
-
+    # Determines which cards the computer player will give away to the other players
     def gave_away(self, NP_rest_of_cards):
         #print_cards(self.cards)
         #print("Player cards")
@@ -257,7 +243,7 @@ class ComputerPlayer(Player):
         self.cards.pop(0)
         self.cards.sort(key = lambda card: (color_order[card.color],figure_order[card.figure]))
         return cards_to_gave_away
-        
+    # Determines which card the computer player will play, considering the cards on the table, the atut and the cards that are still in play    
     def make_a_move(self, NP_rest_of_cards, on_table, atu):
         #print_cards(self.cards)
         self.give_points_to_cards(NP_rest_of_cards)
