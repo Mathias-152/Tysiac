@@ -36,7 +36,7 @@ Sklonuj repozytorium:
 ```bash
 git clone https://github.com/Mathias-152/Tysiac.git
 cd Tysiac
-Uruchomienie pliku main.py
+python main.py
 
 
 
