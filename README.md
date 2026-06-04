@@ -14,11 +14,12 @@ Celem projektu jest rozwijanie umiejętności programowania w Pythonie oraz impl
 - Możliwość rozegrania pełnej gry w konsoli
 - Algorytm analizujący posiadane karty i wybierający najlepszy ruch w danym momencie
 - System punktacji i przebiegu rozgrywki
+- GUI w PyGame
 
 ---
 
 ## Funkcje planowane
-- Interfejs graficzny w PyGame
+- Brak
 
 ---
 
@@ -36,4 +37,5 @@ Sklonuj repozytorium:
 ```bash
 git clone https://github.com/Mathias-152/Tysiac.git
 cd Tysiac
+pip install pygame
 python main.py
