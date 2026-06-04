@@ -1,4 +1,6 @@
+from pathlib import Path
 
+path = Path.cwd().as_posix()
 symbols = {
     "Kier": "♥",
     "Karo": "♦",
