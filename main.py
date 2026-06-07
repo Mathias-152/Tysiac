@@ -9,7 +9,7 @@ from Card import Card
 
 
 def main():
-    player1 = HumanPlayer("Mathias")
+    player1 = HumanPlayer("Player 1")
     game1 = Game(player1)
     game1.setup()
 

@@ -49,7 +49,7 @@ class Game:
         deck.sort(key = lambda card: (color_order[card.color], figure_order[card.figure]))
         return deck
     # Draws the bidding screen, showing the players' cards, the current highest bid, and the buttons for placing bids. It also handles the display of the cards that players will give away to the highest bidder after the bidding phase.
-    def draw_bidding(self, Bet_Buttons, curr_bet = 100, highest_bet = 100, highest_bidder = "Mathias"):
+    def draw_bidding(self, Bet_Buttons, curr_bet, highest_bet, highest_bidder, reset_button, reset_button_visible = False):
         background_surf = pygame.image.load(f"{path}/Images/Background.png").convert_alpha()
         self.screen.blit(background_surf, (0,0))
         back_card = pygame.image.load(f"{path}/Images/BACK.png")
@@ -72,6 +72,8 @@ class Game:
         self.screen.blit(curr_surf, curr_rect)
         for bt in Bet_Buttons:
             self.screen.blit(bt.surface, bt.rect)
+        if reset_button_visible:
+            self.screen.blit(reset_button.surface, reset_button.rect)
         scores_text = [
         f"Final scores:",
         f"{self.players[0].name}: {self.player_scores[0]}",
@@ -129,8 +131,8 @@ class Game:
         bidder = self.players[(self.round_nr+1)%3]
         passed_players = []
         possible_bet = [0, 5, 10, 15, 20, 50, 100]
+        reset_button = Button("Reset", 1000, 415, 180, 70)
         bet_buttons = [Bet_Button(f"Bet{str(possible_bet[i])}", 437 + 132 * i if i < 4 else 569 + 132 * (i - 4), 415 if i == 0 else 395 if i < 4 else 435, 120 , 70 if i == 0 else 30, possible_bet[i]) for i in range(len(possible_bet)) ]
-
         while len(passed_players) < 2:
             if bidder in passed_players:
                 bidder = self.players[(bidder.id+1)%3]
@@ -139,6 +141,9 @@ class Game:
                 bet = bidder.make_a_bid(highest_bid, highest_bidder, 0, self.rest_of_cards)
                 if bet == 0:
                     passed_players.append(bidder)
+                else:
+                    highest_bid += bet
+                    highest_bidder = self.players[bidder.id]
                 bidder = self.players[(bidder.id+1)%3]
             else:
                 action_taken = False
@@ -157,16 +162,16 @@ class Game:
                                 action_taken = True
                     if action_taken:
                         bidder = self.players[(bidder.id+1)%3]
-            self.draw_bidding(bet_buttons, highest_bid, highest_bid, highest_bidder.name)
+            self.draw_bidding(bet_buttons, highest_bid, highest_bid, highest_bidder.name, reset_button)
             self.clock.tick(30)
         # print("Highest bidder: " + highest_bidder.name + " with a bet of " + str(highest_bid))
         while len(self.table_cards) > 0:
             temp = self.table_cards.pop(0)
             highest_bidder.cards.append(temp)
         highest_bidder.cards.sort(key = lambda card: (color_order[card.color],figure_order[card.figure]))
-        self.draw_bidding(bet_buttons, highest_bid, highest_bid, highest_bidder.name)
-        
-        
+        self.draw_bidding(bet_buttons, highest_bid, highest_bid, highest_bidder.name, reset_button)
+
+
         
         if highest_bidder.id != 0:
             cards_to_give = highest_bidder.gave_away(self.rest_of_cards)
@@ -208,6 +213,8 @@ class Game:
         self.players[(highest_bidder.id+2)%3].cards.append(cards_to_give[1])
         self.players[(highest_bidder.id+1)%3].cards.sort(key = lambda card: (color_order[card.color],figure_order[card.figure]))
         self.players[(highest_bidder.id+2)%3].cards.sort(key = lambda card: (color_order[card.color],figure_order[card.figure]))
+        
+        reset_value = highest_bid
         if(highest_bidder.id!=0):
             bet = int(highest_bidder.make_a_bid(highest_bid, highest_bidder, 1, self.rest_of_cards))
             highest_bid += bet
@@ -225,7 +232,9 @@ class Game:
                                 done = True
                             else:
                                 highest_bid += bb.value
-                self.draw_bidding(bet_buttons, highest_bid, highest_bid, highest_bidder.name)
+                    if event.type == pygame.MOUSEBUTTONDOWN and reset_button.is_clicked(pygame.mouse.get_pos()):
+                        highest_bid = reset_value
+                self.draw_bidding(bet_buttons, highest_bid, highest_bid, highest_bidder.name, reset_button, True)
         return highest_bidder.id, highest_bid
     # Draws the playing phase screen, showing the players' cards, the cards on the table, the current atut (trump suit), and the highest bid. It also handles the display of the cards played by each player during their turn.
     def draw_playing(self, on_table, atut, highest_bidder_id, highest_bid, invalid = []):
@@ -368,7 +377,7 @@ class Game:
 
     # Checks if any player has reached the score of 1000 or more, which would indicate that the game is finished
     def is_finnished(self):
-        return any(score >= 100 for score in self.player_scores)
+        return any(score >= 10 for score in self.player_scores)
     
     # Handles the entire flow of a round, including dealing cards, bidding, playing, and updating scores. It also checks for the end of the game and declares the winner if the game is finished.
     def round(self):
