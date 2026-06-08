@@ -338,6 +338,8 @@ class Game:
             print_cards(on_table)
             winning_card = on_table[0]
             for card in on_table:
+                if any(c.figure == card.figure and c.color == card.color for c in self.rest_of_cards):
+                    self.rest_of_cards.remove(card)
                 if card.color == winning_card.color and card.standard_value() > winning_card.standard_value():
                     #print("New winning card: " + str(card) + " Higher in color")
                     winning_card = card
@@ -377,7 +379,7 @@ class Game:
 
     # Checks if any player has reached the score of 1000 or more, which would indicate that the game is finished
     def is_finnished(self):
-        return any(score >= 10 for score in self.player_scores)
+        return any(score >= 1000 for score in self.player_scores)
     
     # Handles the entire flow of a round, including dealing cards, bidding, playing, and updating scores. It also checks for the end of the game and declares the winner if the game is finished.
     def round(self):
@@ -385,7 +387,7 @@ class Game:
 
             print("************************************* Round " + str(self.round_nr) + " *************************************")
             self.table_cards = self.deal_cards()
-            self.players[1].give_points_to_cards(self.rest_of_cards)
+            #self.players[1].give_points_to_cards(self.rest_of_cards)
             highest_bidder_id, highest_bid = self.bidding_phase()
             first_player_id = highest_bidder_id
             sum_from_cards = self.playing_phase(first_player_id, highest_bidder_id, highest_bid)
@@ -396,7 +398,9 @@ class Game:
                     else:
                         self.player_scores[i] += highest_bid
                 else:
-                    self.player_scores[i] += round(sum_from_cards[i]/5)*5
+                    if self.player_scores[i] <= 800:
+                        self.player_scores[i] += round(sum_from_cards[i]/5)*5
+                    
             print("Scores: ")
             for i in range(3):
                 print(self.players[i].name + ": " + str(self.player_scores[i]))

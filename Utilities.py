@@ -39,6 +39,15 @@ def print_cards(cards):
         print(f"   {i}    ", end="")
     print()
 
+def print_cards_with_value(cards, player_name):
+    print(player_name, end="")
+    for card in cards:
+        print("(", card, ")", end = " ")
+    print(f"\n{player_name}", end="")
+    for i in range(len(cards)):
+        print(f"   {int(cards[i].value)}    ", end="")
+    print()
+
     
 colors = ("Kier", "Pik", "Karo", "Trefl")
 figures = ("A", "10", "K", "D", "J", "9")

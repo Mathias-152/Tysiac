@@ -204,7 +204,9 @@ class ComputerPlayer(Player):
             return 0
         
     # Determinates card value based on played cards, cards in hand and cards that are still in play
-    def give_points_to_cards(self, NP_rest_of_cards):
+    def give_points_to_cards(self, NP_rest_of_cards, is_playing = False):
+        for card in self.cards:
+            card.value = card.standard_value()
         rest_of_cards = [card for card in NP_rest_of_cards if card not in self.cards]
         for color in colors: 
             card_in_color = []
@@ -224,14 +226,29 @@ class ComputerPlayer(Player):
             for card in self.cards:
                 if color == card.color:
                     card.value+=2*(len(card_in_color)-1)
-            # +8 if there is "10" and only one other card in color
+            
+            for card in self.cards:
+                if color == card.color:
+                    if card.figure == "10" and len(card_in_color) >= 2:
+                        continue
+                    else: 
+                        if is_playing:
+                            card.value+=10
+            # +9 if there is "10" and only one other card in color
             if len(card_in_color)==2 and any(c.figure == "10" for c in card_in_color):
                 for c in card_in_color:
-                    c.value+=8
-            # +5 if card is highest in color
+                    if c.figure!="10" and is_playing:
+                        c.value+=9
+                    
+
+            # +50 if card is highest in color
             for card in card_in_color:
-                if not any(c.standard_value()>card.standard_value() for c in rest_of_cards):
-                    card.value+=5
+                if not any(c.standard_value()>card.standard_value() and c.color == card.color for c in rest_of_cards):
+                    card.value+=50
+
+            
+            
+        print_cards_with_value(self.cards, self.name)
         return 
     
     # Determines which cards the computer player will give away to the other players
@@ -251,7 +268,7 @@ class ComputerPlayer(Player):
     # Determines which card the computer player will play, considering the cards on the table, the atut and the cards that are still in play    
     def make_a_move(self, NP_rest_of_cards, on_table, atu):
         #print_cards(self.cards)
-        self.give_points_to_cards(NP_rest_of_cards)
+        self.give_points_to_cards(NP_rest_of_cards, len(on_table)==0)
         card_to_give = Card("A", "Error")
         if on_table:
             if self.if_any_higher_card(on_table, atu):
